@@ -11,6 +11,9 @@ type PostListItemProps = {
 }
 
 export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
+	const shouldShowImage = isDetailedPost || post.image
+	const shouldShowDescription = isDetailedPost || !post.image
+
 	return (
 		<Link href={`/post/${post.id}`}>
 			<View style={styles.container}>
@@ -39,15 +42,15 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 				</View>
 
 				<Text style={{ fontWeight: 'bold', fontSize: 17 }}>{post.title}</Text>
-				{post.image && (
+				{shouldShowImage && post.image && (
 					<Image
 						source={{ uri: post.image }}
 						style={{ width: '100%', aspectRatio: 16 / 9, borderRadius: 15 }}
 					/>
 				)}
-				{!post.image && post.description && (
+				{shouldShowDescription && post.description && (
 					<Text
-						numberOfLines={4}
+						numberOfLines={isDetailedPost ? undefined : 4}
 						style={{ marginTop: 5, marginBottom: 10 }}>
 						{post.description}
 					</Text>
