@@ -17,6 +17,10 @@ export default function AppLayout() {
 				options={{ headerShown: false }}
 			/>
 			<Stack.Screen
+				name='group-selector'
+				options={{ headerShown: false }}
+			/>
+			<Stack.Screen
 				name='post/[id]'
 				options={{
 					headerTitle: '',
