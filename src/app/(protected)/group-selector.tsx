@@ -5,11 +5,17 @@ import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextI
 import { SafeAreaView } from 'react-native-safe-area-context'
 import groups from '../../../assets/data/groups.json'
 import { Group } from '../../types'
+import { useSetAtom } from 'jotai'
+import { selectedGroupAtom } from '../../atoms'
 
 export default function GroupSelector() {
-	const [searchValue, setSearchValue] = useState('')
+	const setGroup = useSetAtom(selectedGroupAtom)
+	const [searchText, setSearchText] = useState<string>('')
+
+	const filteredGroups = groups.filter(group => group.name.toLowerCase().includes(searchText.toLowerCase()))
 
 	const onGroupSelected = (group: Group) => {
+		setGroup(group)
 		router.back()
 	}
 
@@ -53,15 +59,15 @@ export default function GroupSelector() {
 					placeholder='Search for a community'
 					placeholderTextColor={'grey'}
 					style={{ paddingVertical: 10, flex: 1 }}
-					value={searchValue}
-					onChangeText={text => setSearchValue(text)}
+					value={searchText}
+					onChangeText={text => setSearchText(text)}
 				/>
-				{searchValue && (
+				{searchText && (
 					<AntDesign
 						name='close-circle'
 						size={15}
 						color='#E4E4E4'
-						onPress={() => setSearchValue('')}
+						onPress={() => setSearchText('')}
 					/>
 				)}
 			</View>
@@ -70,7 +76,7 @@ export default function GroupSelector() {
 				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 				style={{ flex: 1 }}>
 				<FlatList
-					data={groups}
+					data={filteredGroups}
 					renderItem={({ item }) => (
 						<Pressable
 							onPress={() => onGroupSelected(item)}

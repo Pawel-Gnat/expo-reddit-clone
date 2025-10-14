@@ -2,6 +2,7 @@ import { Text, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import posts from '../../../../assets/data/posts.json'
 import { PostListItem } from '../../../components/post-list-item'
+import Comments from '../../../../assets/data/comments.json'
 
 export default function DetailedPost() {
 	const { id } = useLocalSearchParams()
