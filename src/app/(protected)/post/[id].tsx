@@ -4,7 +4,7 @@ import posts from '../../../../assets/data/posts.json'
 import { PostListItem } from '../../../components/post-list-item'
 import comments from '../../../../assets/data/comments.json'
 import CommentListItem from '../../../components/comment-list-item'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function DetailedPost() {
@@ -29,6 +29,11 @@ export default function DetailedPost() {
 
 	const postComments = comments.filter(comment => comment.post_id === 'post-1')
 
+	const handleReplyButtonPressed = useCallback((commentId: string) => {
+		setReplyToId(commentId)
+		inputRef.current?.focus()
+	}, [])
+
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -42,7 +47,13 @@ export default function DetailedPost() {
 					/>
 				}
 				data={postComments}
-				renderItem={({ item }) => <CommentListItem comment={item} />}
+				renderItem={({ item }) => (
+					<CommentListItem
+						comment={item}
+						depth={0}
+						handleReplyButtonPressed={handleReplyButtonPressed}
+					/>
+				)}
 			/>
 			<View
 				style={{

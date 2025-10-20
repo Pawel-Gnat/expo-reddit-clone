@@ -1,14 +1,16 @@
-import { View, Text, Image, Pressable } from 'react-native'
+import { View, Text, Image, Pressable, FlatList } from 'react-native'
 import { Entypo, Octicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { Comment } from '../types'
-import { useState } from 'react'
+import { memo, useState } from 'react'
 
 type CommentListItemProps = {
 	comment: Comment
+	depth: number
+	handleReplyButtonPressed: (commentId: string) => void
 }
 
-const CommentListItem = ({ comment }: CommentListItemProps) => {
+const CommentListItem = ({ comment, depth, handleReplyButtonPressed }: CommentListItemProps) => {
 	const [showReplies, setShowReplies] = useState(false)
 
 	return (
@@ -20,6 +22,7 @@ const CommentListItem = ({ comment }: CommentListItemProps) => {
 				paddingVertical: 5,
 				gap: 10,
 				borderLeftColor: '#E5E7EB',
+				borderLeftWidth: depth > 0 ? 1 : 0,
 			}}>
 			<View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
 				<Image
@@ -69,7 +72,7 @@ const CommentListItem = ({ comment }: CommentListItemProps) => {
 				</View>
 			</View>
 
-			{comment.replies.length && !showReplies && (
+			{comment.replies.length > 0 && !showReplies && (
 				<Pressable
 					onPress={() => setShowReplies(true)}
 					style={{
@@ -89,8 +92,19 @@ const CommentListItem = ({ comment }: CommentListItemProps) => {
 					</Text>
 				</Pressable>
 			)}
+
+			{showReplies &&
+				!!comment.replies?.length &&
+				comment.replies.map(item => (
+					<CommentListItem
+						key={item.id}
+						comment={item}
+						depth={depth + 1}
+						handleReplyButtonPressed={handleReplyButtonPressed}
+					/>
+				))}
 		</View>
 	)
 }
 
-export default CommentListItem
+export default memo(CommentListItem)
