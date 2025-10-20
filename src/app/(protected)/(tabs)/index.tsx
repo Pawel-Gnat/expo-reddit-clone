@@ -1,8 +1,10 @@
-import { View, FlatList } from 'react-native'
+import { View, FlatList, ActivityIndicator, Text } from 'react-native'
 import { PostListItem } from '../../../components/post-list-item'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Tables } from '../../../types/database.types'
+import { useQuery } from '@tanstack/react-query'
+import { fetchPosts } from '../../../services/postService'
 
 type Post = Tables<'posts'> & {
 	user: Tables<'users'>
@@ -10,23 +12,23 @@ type Post = Tables<'posts'> & {
 }
 
 export default function HomeScreen() {
-	const [posts, setPosts] = useState<Post[]>([])
+	const {
+		data: posts,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ['posts'],
+		queryFn: () => fetchPosts(),
+		staleTime: 1000 * 60 * 5,
+	})
 
-	useEffect(() => {
-		fetchPosts()
-	}, [])
+	if (isLoading) {
+		return <ActivityIndicator />
+	}
 
-	const fetchPosts = async () => {
-		const { data, error } = await supabase
-			.from('posts')
-			.select('*, group:groups(*), user:users!posts_user_id_fkey(*)')
-			.order('created_at', { ascending: false })
-
-		if (error) {
-			console.log(error)
-		} else {
-			setPosts(data)
-		}
+	if (error) {
+		console.log(error)
+		return <Text>Error fetching posts</Text>
 	}
 
 	return (
