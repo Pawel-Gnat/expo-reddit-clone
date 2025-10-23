@@ -1,22 +1,49 @@
 import { AntDesign, EvilIcons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native'
+import {
+	ActivityIndicator,
+	FlatList,
+	Image,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	Text,
+	TextInput,
+	View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import groups from '../../../assets/data/groups.json'
-import { Group } from '../../types'
+
 import { useSetAtom } from 'jotai'
 import { selectedGroupAtom } from '../../atoms'
+import { useQuery } from '@tanstack/react-query'
+import { fetchGroups } from '../../services/group-service'
+import { Tables } from '../../types/database.types'
+
+type Group = Tables<'groups'>
 
 export default function GroupSelector() {
 	const setGroup = useSetAtom(selectedGroupAtom)
 	const [searchText, setSearchText] = useState<string>('')
 
-	const filteredGroups = groups.filter(group => group.name.toLowerCase().includes(searchText.toLowerCase()))
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['groups', { searchText }],
+		queryFn: () => fetchGroups(searchText),
+		staleTime: 10_000,
+		placeholderData: previousData => previousData,
+	})
 
 	const onGroupSelected = (group: Group) => {
 		setGroup(group)
 		router.back()
+	}
+
+	if (isLoading) {
+		return <ActivityIndicator />
+	}
+
+	if (error || !data) {
+		return <Text>Error fetching groups</Text>
 	}
 
 	return (
@@ -76,7 +103,7 @@ export default function GroupSelector() {
 				behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 				style={{ flex: 1 }}>
 				<FlatList
-					data={filteredGroups}
+					data={data}
 					renderItem={({ item }) => (
 						<Pressable
 							onPress={() => onGroupSelected(item)}

@@ -2,8 +2,13 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { formatDistanceToNowStrict } from 'date-fns'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { Post } from '../types'
 import { Link } from 'expo-router'
+import { Tables } from '../types/database.types'
+
+type Post = Tables<'posts'> & {
+	user: Tables<'users'>
+	group: Tables<'groups'>
+}
 
 type PostListItemProps = {
 	post: Post
@@ -15,8 +20,10 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 	const shouldShowDescription = isDetailedPost || !post.image
 
 	return (
-		<Link href={`/post/${post.id}`}>
-			<View style={styles.container}>
+		<Link
+			href={`/post/${post.id}`}
+			asChild>
+			<Pressable style={styles.container}>
 				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
 					<Image
 						source={{ uri: post.group.image }}
@@ -98,7 +105,7 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 						/>
 					</View>
 				</View>
-			</View>
+			</Pressable>
 		</Link>
 	)
 }

@@ -2,6 +2,7 @@ import { AntDesign, Feather } from '@expo/vector-icons'
 import { Link, router } from 'expo-router'
 import { useState } from 'react'
 import {
+	Alert,
 	Image,
 	KeyboardAvoidingView,
 	Platform,
@@ -15,12 +16,47 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAtom } from 'jotai'
 import { selectedGroupAtom } from '../../../atoms'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { insertPost } from '../../../services/post-service'
+import { useSupabase } from '../../../lib/supabase'
 
 export default function CreateScreen() {
 	const [group, setGroup] = useAtom(selectedGroupAtom)
 	const [title, setTitle] = useState('')
 	const [bodyText, setBodyText] = useState('')
-	const [isPending, setIsPending] = useState(false)
+	const [image, setImage] = useState<string | null>(null)
+
+	const queryClient = useQueryClient()
+	const supabase = useSupabase()
+
+	const { mutate, isPending } = useMutation({
+		mutationFn: (image: string | undefined) => {
+			if (!group) {
+				throw new Error('Please select a group')
+			}
+			if (!title) {
+				throw new Error('Title is required')
+			}
+
+			return insertPost(
+				{
+					title,
+					description: bodyText,
+					group_id: group.id,
+					image,
+				},
+				supabase
+			)
+		},
+		onSuccess: data => {
+			queryClient.invalidateQueries({ queryKey: ['posts'] })
+			goBack()
+		},
+		onError: error => {
+			console.log(error)
+			Alert.alert('Failed to insert post', error.message)
+		},
+	})
 
 	const goBack = () => {
 		setTitle('')
@@ -29,8 +65,9 @@ export default function CreateScreen() {
 		router.back()
 	}
 
-	const onPostClick = () => {
-		console.log('Post clicked')
+	const onPostClick = async () => {
+		// let imagePath = image ? await uploadImage(image, supabase) : undefined
+		mutate(imagePath)
 	}
 
 	const pickImage = () => {

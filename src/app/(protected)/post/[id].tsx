@@ -1,14 +1,25 @@
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native'
+import {
+	ActivityIndicator,
+	FlatList,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	Text,
+	TextInput,
+	View,
+} from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
-import posts from '../../../../assets/data/posts.json'
 import { PostListItem } from '../../../components/post-list-item'
 import comments from '../../../../assets/data/comments.json'
 import CommentListItem from '../../../components/comment-list-item'
 import { useCallback, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useQuery } from '@tanstack/react-query'
+import { fetchPostById } from '../../../services/post-service'
+import { useSupabase } from '../../../lib/supabase'
 
 export default function DetailedPost() {
-	const { id } = useLocalSearchParams()
+	const { id } = useLocalSearchParams<{ id: string }>()
 	const [comment, setComment] = useState<string>('')
 	const [isInputFocused, setIsInputFocused] = useState<boolean>(false)
 	const [replyToId, setReplyToId] = useState<string | null>(null)
@@ -16,12 +27,18 @@ export default function DetailedPost() {
 	const inputRef = useRef<TextInput | null>(null)
 
 	const insets = useSafeAreaInsets()
+	const supabase = useSupabase()
 
-	const detailedPost = posts.find(post => post.id === id)
+	const {
+		data: post,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ['posts', id],
+		queryFn: () => fetchPostById(id, supabase),
+	})
 
-	if (!detailedPost) {
-		return <Text>Post not found</Text>
-	}
+	console.log(post, id, isLoading, error)
 
 	const createComment = () => {
 		console.log('createComment')
@@ -34,6 +51,14 @@ export default function DetailedPost() {
 		inputRef.current?.focus()
 	}, [])
 
+	if (isLoading) {
+		return <ActivityIndicator />
+	}
+
+	if (error || !post) {
+		return <Text>Post Not Found</Text>
+	}
+
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -42,7 +67,7 @@ export default function DetailedPost() {
 			<FlatList
 				ListHeaderComponent={
 					<PostListItem
-						post={detailedPost}
+						post={post}
 						isDetailedPost
 					/>
 				}
