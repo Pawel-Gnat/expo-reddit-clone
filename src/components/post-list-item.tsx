@@ -6,7 +6,6 @@ import { Link } from 'expo-router'
 import { Tables } from '../types/database.types'
 
 type Post = Tables<'posts'> & {
-	user: Tables<'users'>
 	group: Tables<'groups'>
 }
 
@@ -33,10 +32,10 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 						<View style={{ flexDirection: 'row', gap: 5 }}>
 							<Text style={{ fontWeight: 'bold', fontSize: 13, color: '#3A3B3C' }}>{post.group.name}</Text>
 							<Text style={{ color: 'gray', fontSize: 13, alignSelf: 'flex-start' }}>
-								{formatDistanceToNowStrict(new Date(post.created_at))}
+								{formatDistanceToNowStrict(new Date(post.created_at ?? ''))}
 							</Text>
 						</View>
-						{isDetailedPost && <Text style={{ fontSize: 13, color: '#2E5DAA' }}>{post.user.name}</Text>}
+						{isDetailedPost && <Text style={{ fontSize: 13, color: '#2E5DAA' }}>{post.user?.name}</Text>}
 					</View>
 					<Pressable
 						onPress={() => console.error('Pressed')}
@@ -123,9 +122,7 @@ const styles = StyleSheet.create({
 		width: 20,
 		height: 20,
 		borderRadius: 100,
-
 		marginRight: 5,
-		// sprawdz czy mR potrzebny jest
 	},
 	iconBox: {
 		borderWidth: 0.5,

@@ -4,7 +4,7 @@ import { Database, TablesInsert } from '../types/database.types'
 export const fetchPosts = async (supabase: SupabaseClient<Database>) => {
 	const { data, error } = await supabase
 		.from('posts')
-		.select('*, group:groups(*), user:users!posts_user_id_fkey(*)')
+		.select('*, group:groups(*)')
 		.order('created_at', { ascending: false })
 
 	if (error) {
@@ -18,7 +18,7 @@ export const fetchPostById = async (id: string, supabase: SupabaseClient<Databas
 	const { data, error } = await supabase
 		.from('posts')
 		// .select('*, group:groups(*), upvotes(value.sum()), nr_of_comments:comments(count)')
-		.select('*, group:groups(*), user:users!posts_user_id_fkey(*)')
+		.select('*, group:groups(*)')
 		.eq('id', id)
 		.single()
 
