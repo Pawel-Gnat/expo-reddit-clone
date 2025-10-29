@@ -117,16 +117,19 @@ export type Database = {
           created_at: string | null
           post_id: string
           user_id: string
+          value: number | null
         }
         Insert: {
           created_at?: string | null
           post_id: string
           user_id?: string
+          value?: number | null
         }
         Update: {
           created_at?: string | null
           post_id?: string
           user_id?: string
+          value?: number | null
         }
         Relationships: [
           {

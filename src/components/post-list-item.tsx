@@ -4,9 +4,14 @@ import { formatDistanceToNowStrict } from 'date-fns'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Link } from 'expo-router'
 import { Tables } from '../types/database.types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSupabase } from '../lib/supabase'
+import { createUpvote, selectMyVote } from '../services/upvotes-service'
+import { useSession } from '@clerk/clerk-expo'
 
 type Post = Tables<'posts'> & {
 	group: Tables<'groups'>
+	upvotes: { sum: number }[]
 }
 
 type PostListItemProps = {
@@ -15,6 +20,25 @@ type PostListItemProps = {
 }
 
 export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
+	const supabase = useSupabase()
+	const queryClient = useQueryClient()
+	const { session } = useSession()
+
+	const { mutate: upvote } = useMutation({
+		mutationFn: (value: 1 | -1) => createUpvote(post.id, value, supabase),
+		onSuccess: data => {
+			queryClient.invalidateQueries({ queryKey: ['posts'] })
+		},
+	})
+
+	const { data: myVote } = useQuery({
+		queryKey: ['posts', post.id, 'my-upvote'],
+		queryFn: () => selectMyVote(post.id, session?.user.id ?? '', supabase),
+	})
+
+	const isUpvoted = myVote?.value === 1
+	const isDownvoted = myVote?.value === -1
+
 	const shouldShowImage = isDetailedPost || post.image
 	const shouldShowDescription = isDetailedPost || !post.image
 
@@ -66,26 +90,42 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 					<View style={{ flexDirection: 'row', gap: 10 }}>
 						<View style={[{ flexDirection: 'row', gap: 5, alignItems: 'center' }, styles.iconBox]}>
 							<MaterialCommunityIcons
-								name='arrow-up-bold-outline'
+								onPress={() => upvote(1)}
+								name={isUpvoted ? 'arrow-up-bold' : 'arrow-up-bold-outline'}
 								size={19}
-								color='black'
+								color={isUpvoted ? 'crimson' : 'black'}
 							/>
-							<Text style={{ fontWeight: 'bold' }}>{post.upvotes}</Text>
+							<Text
+								style={{
+									fontWeight: '500',
+									marginLeft: 5,
+									alignSelf: 'center',
+								}}>
+								{post.upvotes[0].sum || 0}
+							</Text>
 							<View style={{ width: 1, backgroundColor: '#D4D4D4', height: 14, marginHorizontal: 7 }} />
 							<MaterialCommunityIcons
-								name='arrow-down-bold-outline'
+								onPress={() => upvote(-1)}
+								name={isDownvoted ? 'arrow-down-bold' : 'arrow-down-bold-outline'}
 								size={19}
-								color='black'
+								color={isDownvoted ? 'crimson' : 'black'}
 							/>
 						</View>
 
-						<View style={[{ flexDirection: 'row', gap: 5, alignItems: 'center' }, styles.iconBox]}>
+						<View style={[{ flexDirection: 'row' }, styles.iconBox]}>
 							<MaterialCommunityIcons
 								name='comment-outline'
 								size={19}
 								color='black'
 							/>
-							<Text style={{ fontWeight: 'bold' }}>{post.nr_of_comments}</Text>
+							<Text
+								style={{
+									fontWeight: '500',
+									marginLeft: 5,
+									alignSelf: 'center',
+								}}>
+								{post.nr_of_comments?.[0].count}
+							</Text>
 						</View>
 					</View>
 

@@ -1,5 +1,6 @@
 import {
 	ActivityIndicator,
+	Alert,
 	FlatList,
 	KeyboardAvoidingView,
 	Platform,
@@ -8,15 +9,16 @@ import {
 	TextInput,
 	View,
 } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
+import { router, Stack, useLocalSearchParams } from 'expo-router'
 import { PostListItem } from '../../../components/post-list-item'
 import comments from '../../../../assets/data/comments.json'
 import CommentListItem from '../../../components/comment-list-item'
 import { useCallback, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useQuery } from '@tanstack/react-query'
-import { fetchPostById } from '../../../services/post-service'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { deletePostById, fetchPostById } from '../../../services/post-service'
 import { useSupabase } from '../../../lib/supabase'
+import { AntDesign, Entypo, MaterialIcons } from '@expo/vector-icons'
 
 export default function DetailedPost() {
 	const { id } = useLocalSearchParams<{ id: string }>()
@@ -27,6 +29,7 @@ export default function DetailedPost() {
 	const inputRef = useRef<TextInput | null>(null)
 
 	const insets = useSafeAreaInsets()
+	const queryClient = useQueryClient()
 	const supabase = useSupabase()
 
 	const {
@@ -51,6 +54,17 @@ export default function DetailedPost() {
 		inputRef.current?.focus()
 	}, [])
 
+	const { mutate: remove } = useMutation({
+		mutationFn: () => deletePostById(id, supabase),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['posts'] })
+			router.back()
+		},
+		onError: error => {
+			Alert.alert('Error', error.message)
+		},
+	})
+
 	if (isLoading) {
 		return <ActivityIndicator />
 	}
@@ -64,6 +78,38 @@ export default function DetailedPost() {
 			behavior={Platform.OS === 'ios' ? 'padding' : undefined}
 			style={{ flex: 1 }}
 			keyboardVerticalOffset={insets.top + 10}>
+			<Stack.Screen
+				options={{
+					headerRight: () => (
+						<View style={{ flexDirection: 'row', gap: 10 }}>
+							<Entypo
+								onPress={() => remove()}
+								name='trash'
+								size={24}
+								color='white'
+							/>
+
+							<AntDesign
+								name='search'
+								size={24}
+								color='white'
+							/>
+							<MaterialIcons
+								name='sort'
+								size={27}
+								color='white'
+							/>
+							<Entypo
+								name='dots-three-horizontal'
+								size={24}
+								color='white'
+							/>
+						</View>
+					),
+					animation: 'slide_from_bottom',
+				}}
+			/>
+
 			<FlatList
 				ListHeaderComponent={
 					<PostListItem

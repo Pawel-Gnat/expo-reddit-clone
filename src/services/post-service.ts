@@ -17,8 +17,7 @@ export const fetchPosts = async (supabase: SupabaseClient<Database>) => {
 export const fetchPostById = async (id: string, supabase: SupabaseClient<Database>) => {
 	const { data, error } = await supabase
 		.from('posts')
-		// .select('*, group:groups(*), upvotes(value.sum()), nr_of_comments:comments(count)')
-		.select('*, group:groups(*)')
+		.select('*, group:groups(*), upvotes(value.sum()), nr_of_comments:comments(count)')
 		.eq('id', id)
 		.single()
 
@@ -34,6 +33,15 @@ type InsertPost = TablesInsert<'posts'>
 export const insertPost = async (post: InsertPost, supabase: SupabaseClient<Database>) => {
 	const { data, error } = await supabase.from('posts').insert(post).select().single()
 
+	if (error) {
+		throw error
+	} else {
+		return data
+	}
+}
+
+export const deletePostById = async (id: string, supabase: SupabaseClient<Database>) => {
+	const { data, error } = await supabase.from('posts').delete().eq('id', id)
 	if (error) {
 		throw error
 	} else {
