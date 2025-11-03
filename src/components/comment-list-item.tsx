@@ -1,8 +1,13 @@
-import { View, Text, Image, Pressable, FlatList } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import { Entypo, Octicons, MaterialCommunityIcons } from '@expo/vector-icons'
-import { formatDistanceToNowStrict } from 'date-fns'
-import { Comment } from '../types'
 import { memo, useState } from 'react'
+import { Tables } from '../types/database.types'
+import { useSession } from '@clerk/clerk-expo'
+import { useSupabase } from '../lib/supabase'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { deleteComment, fetchCommentReplies } from '../services/comments-service'
+
+type Comment = Tables<'comments'>
 
 type CommentListItemProps = {
 	comment: Comment
@@ -12,6 +17,27 @@ type CommentListItemProps = {
 
 const CommentListItem = ({ comment, depth, handleReplyButtonPressed }: CommentListItemProps) => {
 	const [showReplies, setShowReplies] = useState(false)
+	const { session } = useSession()
+
+	const supabase = useSupabase()
+	const queryClient = useQueryClient()
+
+	const { data: replies } = useQuery({
+		queryKey: ['comments', { parentId: comment.id }],
+		queryFn: () => fetchCommentReplies(comment.id, supabase),
+	})
+
+	const { mutate: removeComment } = useMutation({
+		mutationFn: () => deleteComment(comment.id, supabase),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ['comments', { postId: comment.post_id }],
+			})
+			queryClient.invalidateQueries({
+				queryKey: ['comments', { parentId: comment.parent_id }],
+			})
+		},
+	})
 
 	return (
 		<View
@@ -24,33 +50,21 @@ const CommentListItem = ({ comment, depth, handleReplyButtonPressed }: CommentLi
 				borderLeftColor: '#E5E7EB',
 				borderLeftWidth: depth > 0 ? 1 : 0,
 			}}>
-			<View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-				<Image
-					source={{
-						uri: comment.user.image || 'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/avatars/3.jpg',
-					}}
-					style={{ width: 28, height: 28, borderRadius: 15, marginRight: 4 }}
-				/>
-				<Text style={{ fontWeight: '600', color: '#737373', fontSize: 13 }}>{comment.user.name}</Text>
-				<Text style={{ color: '#737373', fontSize: 13 }}>&#x2022;</Text>
-				<Text style={{ color: '#737373', fontSize: 13 }}>
-					{formatDistanceToNowStrict(new Date(comment.created_at))}
-				</Text>
-			</View>
-
 			<Text>{comment.comment}</Text>
-
 			<View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 14 }}>
-				<Entypo
-					name='dots-three-horizontal'
-					size={15}
-					color='#737373'
-				/>
+				{session?.user.id === comment.user_id && (
+					<Entypo
+						onPress={() => removeComment()}
+						name='trash'
+						size={15}
+						color='#737373'
+					/>
+				)}
 				<Octicons
 					name='reply'
 					size={16}
 					color='#737373'
-					onPress={() => console.log('Reply button pressed')}
+					onPress={() => handleReplyButtonPressed(comment.id)}
 				/>
 				<MaterialCommunityIcons
 					name='trophy-outline'
@@ -72,7 +86,7 @@ const CommentListItem = ({ comment, depth, handleReplyButtonPressed }: CommentLi
 				</View>
 			</View>
 
-			{comment.replies.length > 0 && !showReplies && (
+			{!!replies?.length && !showReplies && depth < 5 && (
 				<Pressable
 					onPress={() => setShowReplies(true)}
 					style={{
@@ -94,8 +108,8 @@ const CommentListItem = ({ comment, depth, handleReplyButtonPressed }: CommentLi
 			)}
 
 			{showReplies &&
-				!!comment.replies?.length &&
-				comment.replies.map(item => (
+				!!replies?.length &&
+				replies.map(item => (
 					<CommentListItem
 						key={item.id}
 						comment={item}

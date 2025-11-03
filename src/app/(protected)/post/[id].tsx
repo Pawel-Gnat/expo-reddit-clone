@@ -11,7 +11,6 @@ import {
 } from 'react-native'
 import { router, Stack, useLocalSearchParams } from 'expo-router'
 import { PostListItem } from '../../../components/post-list-item'
-import comments from '../../../../assets/data/comments.json'
 import CommentListItem from '../../../components/comment-list-item'
 import { useCallback, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deletePostById, fetchPostById } from '../../../services/post-service'
 import { useSupabase } from '../../../lib/supabase'
 import { AntDesign, Entypo, MaterialIcons } from '@expo/vector-icons'
+import { fetchComments, insertComment } from '../../../services/comments-service'
 
 export default function DetailedPost() {
 	const { id } = useLocalSearchParams<{ id: string }>()
@@ -41,18 +41,10 @@ export default function DetailedPost() {
 		queryFn: () => fetchPostById(id, supabase),
 	})
 
-	console.log(post, id, isLoading, error)
-
-	const createComment = () => {
-		console.log('createComment')
-	}
-
-	const postComments = comments.filter(comment => comment.post_id === 'post-1')
-
-	const handleReplyButtonPressed = useCallback((commentId: string) => {
-		setReplyToId(commentId)
-		inputRef.current?.focus()
-	}, [])
+	const { data: comments } = useQuery({
+		queryKey: ['comments', { postId: id }],
+		queryFn: () => fetchComments(id, supabase),
+	})
 
 	const { mutate: remove } = useMutation({
 		mutationFn: () => deletePostById(id, supabase),
@@ -64,6 +56,23 @@ export default function DetailedPost() {
 			Alert.alert('Error', error.message)
 		},
 	})
+
+	const { mutate: createComment } = useMutation({
+		mutationFn: () => insertComment({ comment, post_id: id, parent_id: replyToId }, supabase),
+		onSuccess: data => {
+			setComment('')
+			setReplyToId(null)
+			queryClient.invalidateQueries({ queryKey: ['comments', { postId: id }] })
+			queryClient.invalidateQueries({
+				queryKey: ['comments', { parentId: replyToId }],
+			})
+		},
+	})
+
+	const handleReplyButtonPressed = useCallback((commentId: string) => {
+		setReplyToId(commentId)
+		inputRef.current?.focus()
+	}, [])
 
 	if (isLoading) {
 		return <ActivityIndicator />
@@ -117,7 +126,7 @@ export default function DetailedPost() {
 						isDetailedPost
 					/>
 				}
-				data={postComments}
+				data={comments}
 				renderItem={({ item }) => (
 					<CommentListItem
 						comment={item}

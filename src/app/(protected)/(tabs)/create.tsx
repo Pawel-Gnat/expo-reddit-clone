@@ -19,6 +19,8 @@ import { selectedGroupAtom } from '../../../atoms'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { insertPost } from '../../../services/post-service'
 import { useSupabase } from '../../../lib/supabase'
+import * as ImagePicker from 'expo-image-picker'
+import { uploadImage } from '../../../utils/supabase-images'
 
 export default function CreateScreen() {
 	const [group, setGroup] = useAtom(selectedGroupAtom)
@@ -66,12 +68,20 @@ export default function CreateScreen() {
 	}
 
 	const onPostClick = async () => {
-		// let imagePath = image ? await uploadImage(image, supabase) : undefined
+		let imagePath = image ? await uploadImage(image, supabase) : undefined
 		mutate(imagePath)
 	}
 
-	const pickImage = () => {
-		console.log('Image picked')
+	const pickImage = async () => {
+		let result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: ['images'],
+			allowsEditing: true,
+			quality: 1,
+		})
+
+		if (!result.canceled) {
+			setImage(result.assets[0].uri)
+		}
 	}
 
 	return (
@@ -125,6 +135,31 @@ export default function CreateScreen() {
 						multiline
 						scrollEnabled={false}
 					/>
+
+					{image && (
+						<View style={{ paddingBottom: 20 }}>
+							<AntDesign
+								name='close'
+								size={25}
+								color='white'
+								onPress={() => setImage(null)}
+								style={{
+									position: 'absolute',
+									zIndex: 1,
+									right: 10,
+									top: 10,
+									padding: 5,
+									backgroundColor: '#00000090',
+									borderRadius: 20,
+								}}
+							/>
+							<Image
+								source={{ uri: image }}
+								style={{ width: '100%', aspectRatio: 1 }}
+							/>
+						</View>
+					)}
+
 					<TextInput
 						placeholder='body text (optional)'
 						value={bodyText}
