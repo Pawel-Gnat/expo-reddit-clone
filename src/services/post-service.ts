@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database, TablesInsert } from '../types/database.types'
 
+type InsertPost = TablesInsert<'posts'>
+
 export const fetchPosts = async (supabase: SupabaseClient<Database>) => {
 	const { data, error } = await supabase
 		.from('posts')
@@ -27,8 +29,6 @@ export const fetchPostById = async (id: string, supabase: SupabaseClient<Databas
 		return data
 	}
 }
-
-type InsertPost = TablesInsert<'posts'>
 
 export const insertPost = async (post: InsertPost, supabase: SupabaseClient<Database>) => {
 	const { data, error } = await supabase.from('posts').insert(post).select().single()

@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSupabase } from '../lib/supabase'
 import { createUpvote, selectMyVote } from '../services/upvotes-service'
 import { useSession } from '@clerk/clerk-expo'
+import SupabaseImage from './supabase-image'
 
 type Post = Tables<'posts'> & {
 	group: Tables<'groups'>
@@ -73,9 +74,10 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 
 				<Text style={{ fontWeight: 'bold', fontSize: 17 }}>{post.title}</Text>
 				{shouldShowImage && post.image && (
-					<Image
-						source={{ uri: post.image }}
-						style={{ width: '100%', aspectRatio: 16 / 9, borderRadius: 15 }}
+					<SupabaseImage
+						path={post.image}
+						bucket='images'
+						style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 15 }}
 					/>
 				)}
 				{shouldShowDescription && post.description && (
