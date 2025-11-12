@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '../types/database.types'
 
-export const downloadImage = async (image: string, supabase: SupabaseClient<Database>) => {
-	return new Promise(async (resolve, reject) => {
+export const downloadImage = async (image: string, supabase: SupabaseClient<Database>): Promise<string> => {
+	return new Promise<string>(async (resolve, reject) => {
 		try {
 			const { error, data } = await supabase.storage.from('images').download(image)
 

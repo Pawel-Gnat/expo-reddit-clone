@@ -77,7 +77,7 @@ const CommentListItem = ({ comment, depth, handleReplyButtonPressed }: CommentLi
 						size={18}
 						color='#737373'
 					/>
-					<Text style={{ fontWeight: '500', color: '#737373' }}>{comment.upvotes}</Text>
+					<Text style={{ fontWeight: '500', color: '#737373' }}>{comment.upvotes || 0}</Text>
 					<MaterialCommunityIcons
 						name='arrow-down-bold-outline'
 						size={18}

@@ -113,10 +113,12 @@ export default function CreateScreen() {
 						<Pressable style={styles.communityContainer}>
 							{group ? (
 								<>
-									<Image
-										source={{ uri: group.image }}
-										style={{ width: 20, height: 20, borderRadius: 10 }}
-									/>
+									{group.image && (
+										<Image
+											source={{ uri: group.image }}
+											style={{ width: 20, height: 20, borderRadius: 10 }}
+										/>
+									)}
 									<Text style={{ fontWeight: '600' }}>{group.name}</Text>
 								</>
 							) : (

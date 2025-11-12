@@ -49,10 +49,12 @@ export function PostListItem({ post, isDetailedPost }: PostListItemProps) {
 			asChild>
 			<Pressable style={styles.container}>
 				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-					<Image
-						source={{ uri: post.group.image }}
-						style={styles.image}
-					/>
+					{post.group.image && (
+						<Image
+							source={{ uri: post.group.image }}
+							style={styles.image}
+						/>
+					)}
 					<View>
 						<View style={{ flexDirection: 'row', gap: 5 }}>
 							<Text style={{ fontWeight: 'bold', fontSize: 13, color: '#3A3B3C' }}>{post.group.name}</Text>
